@@ -1,0 +1,67 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Category {
+  id       Int      @id @default(autoincrement())
+  name     String   @unique
+  gadgets  Gadget[]
+}
+
+model Brand {
+  id       Int      @id @default(autoincrement())
+  name     String   @unique
+  gadgets  Gadget[]
+}
+
+model Gadget {
+  id               Int      @id @default(autoincrement())
+  name             String
+  brandId          Int      @map("brand_id")
+  categoryId       Int      @map("category_id")
+  model            String
+  price            Decimal  @db.Decimal(10, 2)
+  description      String?  @db.Text
+  performanceSpecs Json?    @map("performance_specs") // JSONB
+  imageUrl         String?  @map("image_url")
+  averageRating    Decimal  @default(0) @map("average_rating") @db.Decimal(3, 2)
+  reviewCount      Int      @default(0) @map("review_count")
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  brand     Brand    @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  category  Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  reviews   Review[]
+
+  @@map("gadgets")
+}
+
+model User {
+  id           Int      @id @default(autoincrement())
+  name         String
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  reviews Review[]
+
+  @@map("users")
+}
+
+model Review {
+  id        Int      @id @default(autoincrement())
+  gadgetId  Int      @map("gadget_id")
+  userId    Int      @map("user_id")
+  rating    Int      // 1-5
+  comment   String?  @db.Text
+  createdAt DateTime @default(now()) @map("created_at")
+
+  gadget Gadget @relation(fields: [gadgetId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("reviews")
+}
